@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Graphic Novel Generator</title>
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --secondary-color: #333333;
+            --background-color: #f5f5f5;
+            --panel-color: #ffffff;
+            --text-color: #333333;
+            --accent-color: #4a4a4a;
+            --header-height: 70px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 0 40px;
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: white;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .header-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            transition: background-color 0.3s;
+            font-size: 18px;
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .header-links a:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .main-content {
+            margin-top: calc(var(--header-height) + 30px);
+            padding: 20px 40px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .input-section {
+            flex: 1;
+            background: var(--panel-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .input-section h1 {
+            display: none;
+        }
+
+        .output-section {
+            flex: 2;
+            background: var(--panel-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .panel {
+            aspect-ratio: 1;
+            background: #f9f9f9;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 10px;
+            overflow: hidden;
+            background-color: white !important;
+        }
+
+        .panel-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .scene-description {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .panel:hover .scene-description {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background-color: #666666;
+        }
+
+        h1, h2, h3 {
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .error {
+            color: red;
+            padding: 10px;
+            background-color: #ffe6e6;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .panel-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .loading.active {
+            display: block;
+        }
+
+        .loading-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: rgba(0,0,0,0.1);
+            color: #666;
+            font-size: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .panel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .error-message {
+            color: #ff4444;
+            padding: 20px;
+            text-align: center;
+            background: rgba(255,255,255,0.9);
+            border-radius: 4px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Graphic Novel Generator</h1>
+        <div class="header-links">
+            <a href="#" onclick="showGallery()">Gallery</a>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="input-section">
+                <h3>Story</h3>
+                <textarea id="storyline" placeholder="Enter your story here..."></textarea>
+                
+                <h3>Art Style</h3>
+                <select id="artStyle">
+                    <option value="manga">Manga</option>
+                    <option value="western">Western Comic</option>
+                    <option value="noir">Film Noir</option>
+                    <option value="watercolor">Watercolor</option>
+                    <option value="pixel">Pixel Art</option>
+                </select>
+
+                <h3>Color Scheme</h3>
+                <select id="colorScheme">
+                    <option value="color">Full Color</option>
+                    <option value="bw">Black & White</option>
+                    <option value="sepia">Sepia</option>
+                    <option value="duotone">Duotone</option>
+                </select>
+
+                <h3>Panel Layout</h3>
+                <select id="panelLayout">
+                    <option value="regular">Regular Grid (2x4)</option>
+                    <option value="dynamic">Dynamic Layout</option>
+                    <option value="manga">Manga Style</option>
+                </select>
+
+                <h3>Tone</h3>
+                <select id="tone">
+                    <option value="dramatic">Dramatic</option>
+                    <option value="lighthearted">Lighthearted</option>
+                    <option value="dark">Dark</option>
+                    <option value="whimsical">Whimsical</option>
+                </select>
+
+                <button onclick="generatePanels()">Generate Panels</button>
+                <div id="error" class="error" style="display: none;"></div>
+            </div>
+
+            <div class="output-section">
+                <h2>Generated Panels</h2>
+                <div class="controls">
+                    <div class="loading" id="loading">Generating panels... Please wait...</div>
+                    <button id="stopButton" onclick="stopGeneration()" class="stop-button" style="display: none;">Stop Generation</button>
+                </div>
+                <div class="panel-grid" id="panelGrid">
+                    <div class="panel"><span class="panel-number">1</span></div>
+                    <div class="panel"><span class="panel-number">2</span></div>
+                    <div class="panel"><span class="panel-number">3</span></div>
+                    <div class="panel"><span class="panel-number">4</span></div>
+                    <div class="panel"><span class="panel-number">5</span></div>
+                    <div class="panel"><span class="panel-number">6</span></div>
+                    <div class="panel"><span class="panel-number">7</span></div>
+                    <div class="panel"><span class="panel-number">8</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateImage(prompt, panelNumber) {
+            try {
+                const response = await fetch('/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt, panelNumber })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to generate image');
+                }
+
+                return data.imageUrl;
+            } catch (error) {
+                console.error(`Image generation error for panel ${panelNumber}:`, error);
+                throw error;
+            }
+        }
+
+        async function generatePanels() {
+            const storyline = document.getElementById('storyline').value;
+            const artStyle = document.getElementById('artStyle').value;
+            const colorScheme = document.getElementById('colorScheme').value;
+            const tone = document.getElementById('tone').value;
+
+            if (!storyline.trim()) {
+                showError('Please enter a storyline');
+                return;
+            }
+
+            // Show loading state
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.classList.add('active');
+            loadingDiv.textContent = 'Preparing to generate panels...';
+
+            try {
+                const scenes = splitIntoScenes(storyline);
+                const panels = document.querySelectorAll('.panel');
+
+                // Generate images one by one
+                for (let i = 0; i < Math.min(panels.length, scenes.length); i++) {
+                    const panel = panels[i];
+                    const scene = scenes[i];
+                    
+                    loadingDiv.textContent = `Generating panel ${i + 1} of ${Math.min(panels.length, scenes.length)}...`;
+                    
+                    // Construct the prompt
+                    const prompt = `${artStyle} style illustration in ${colorScheme} colors: ${scene}. 
+                        The scene should convey a ${tone} tone. ${getAdditionalPromptDetails(artStyle)}`;
+
+                    try {
+                        // Set loading state for this panel
+                        panel.innerHTML = `
+                            <span class="panel-number">${i + 1}</span>
+                            <div class="panel-content">
+                                <div class="loading-panel">Generating image...</div>
+                                <div class="scene-description">${scene}</div>
+                            </div>
+                        `;
+
+                        // Generate image for this panel
+                        const imageUrl = await generateImage(prompt, i + 1);
+                        
+                        // Update panel with generated image
+                        panel.innerHTML = `
+                            <span class="panel-number">${i + 1}</span>
+                            <div class="panel-content">
+                                <img src="${imageUrl}" alt="Panel ${i + 1}" class="panel-image">
+                                <div class="scene-description">${scene}</div>
+                            </div>
+                        `;
+                    } catch (error) {
+                        console.error(`Failed to generate image for panel ${i + 1}:`, error);
+                        panel.innerHTML = `
+                            <span class="panel-number">${i + 1}</span>
+                            <div class="panel-content">
+                                <div class="error-message">Failed to generate image</div>
+                                <div class="scene-description">${scene}</div>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to generate panels:', error);
+                showError('Failed to generate panels. Please try again.');
+            } finally {
+                loadingDiv.classList.remove('active');
+            }
+        }
+
+        function splitIntoScenes(storyline) {
+            // Split by sentences (considering multiple punctuation marks)
+            let scenes = storyline.split(/[.!?]+/)
+                .map(scene => scene.trim())
+                .filter(scene => scene.length > 0);
+
+            // If we have too few scenes, try to break them down further
+            if (scenes.length < 8) {
+                scenes = scenes.reduce((acc, scene) => {
+                    // Split longer scenes by conjunctions
+                    const subScenes = scene.split(/,|\band\b|\bthen\b|\bwhile\b|\bbut\b/i)
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                    return [...acc, ...subScenes];
+                }, []);
+            }
+
+            // Ensure we have exactly 8 scenes
+            if (scenes.length < 8) {
+                // If we still have too few scenes, infer intermediate scenes
+                const finalScenes = [];
+                for (let i = 0; i < scenes.length - 1; i++) {
+                    finalScenes.push(scenes[i]);
+                    if (finalScenes.length < 7) { // Leave room for the last scene
+                        finalScenes.push(`Continuing from "${scenes[i]}" towards "${scenes[i + 1]}"`);
+                    }
+                }
+                finalScenes.push(scenes[scenes.length - 1]); // Add the last scene
+                scenes = finalScenes;
+            }
+
+            // Take first 8 scenes if we have more
+            return scenes.slice(0, 8);
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+            setTimeout(() => {
+                error.style.display = 'none';
+            }, 3000);
+        }
+
+        function showGallery() {
+            alert('Gallery of accepted graphic novels coming soon!');
+        }
+
+        function getAdditionalPromptDetails(artStyle) {
+            switch (artStyle.toLowerCase()) {
+                case 'manga':
+                    return 'Use manga-style art with clean lines and expressive characters.';
+                case 'western':
+                    return 'Use Western comic book style with bold lines and dynamic composition.';
+                case 'noir':
+                    return 'Use dramatic lighting and shadows in a film noir style.';
+                case 'watercolor':
+                    return 'Create a soft, painterly effect with watercolor-style rendering.';
+                case 'pixel':
+                    return 'Create in a detailed pixel art style reminiscent of classic video games.';
+                default:
+                    return '';
+            }
+        }
+    </script>
+</body>
+</html> 
